@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from core.config import get_db_url
 
-
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Motorolae3981!@127.0.0.1:5433/meeting_rooms_booking"
+SQLALCHEMY_DATABASE_URL = get_db_url()
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
