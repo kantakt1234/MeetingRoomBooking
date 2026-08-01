@@ -7,7 +7,7 @@ from core.auth import get_password_hash, verify_password, create_access_token, g
 
 from models.user import User
 
-user_router = APIRouter(prefix='/auth')
+user_router = APIRouter(prefix='/auth', tags=["Authorization"])
 
 
 @user_router.post('/register')
@@ -43,6 +43,6 @@ def auth_user(response: Response, user_data: UserLoginSchema, session: Session =
 
 
 @user_router.post('/logout')
-def logout(response: Response, user_data: User = Depends(get_current_user)):
+def logout(response: Response):
     response.delete_cookie("users_access_token")
     return {"result": "success"}
