@@ -10,3 +10,8 @@ app = FastAPI()
 app.include_router(meeting_room_router)
 app.include_router(user_router)
 app.include_router(booking_router)
+
+
+@app.get("/")
+def root():
+    return {"message": "Meeting Room Booking Api", "version": "1.0.0"}
