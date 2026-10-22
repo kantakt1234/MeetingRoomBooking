@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from core.auth import get_current_user, get_current_admin_user
-from core.db import get_session
-from models import MeetingRoom, User
-from schemas.meeting_room import BaseMeetingRoomSchema
+from app.core.auth import get_current_user, get_current_admin_user
+from app.core.db import get_session
+from app.models import MeetingRoom, User
+from app.schemas.meeting_room import BaseMeetingRoomSchema
 
 
 meeting_room_router = APIRouter(prefix='/meeting_room', tags=["Meeting room"])

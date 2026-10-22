@@ -1,15 +1,14 @@
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import and_, func, literal_column, text
 
 from sqlalchemy.orm import Session
 
-from core.auth import get_current_user
-from core.db import get_session
-from models import User, MeetingRoom
-from models.booking import Booking
-from schemas.booking import BookingCreateSchema
+from app.core.auth import get_current_user
+from app.core.db import get_session
+from app.models import User, MeetingRoom
+from app.models.booking import Booking
+from app.schemas.booking import BookingCreateSchema
 
 booking_router = APIRouter(prefix='/booking', tags=['Booking'])
 

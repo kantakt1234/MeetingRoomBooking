@@ -3,10 +3,10 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from core.auth import get_password_hash
-from core.config import settings
-from core.db import engine
-from models import User
+from app.core.auth import get_password_hash
+from app.core.config import settings
+from app.core.db import engine
+from app.models import User
 
 sys.path.append(str(Path(__file__).parent.parent))
 

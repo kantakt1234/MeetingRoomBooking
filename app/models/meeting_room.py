@@ -1,8 +1,8 @@
-from models.base import Base
+from app.models.base import Base
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import String
 
-from models.booking import Booking
+from app.models.booking import Booking
 
 
 class MeetingRoom(Base):

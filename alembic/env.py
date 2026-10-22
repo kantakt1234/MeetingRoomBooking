@@ -4,8 +4,8 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from models import Base
-from core.config import get_db_url
+from app.models import Base
+from app.core.config import get_db_url
 
 
 # this is the Alembic Config object, which provides
