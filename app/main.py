@@ -13,5 +13,5 @@ app.include_router(booking_router)
 
 
 @app.get("/")
-def root():
+async def root():
     return {"message": "Meeting Room Booking Api", "version": "1.0.0"}

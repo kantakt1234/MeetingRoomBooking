@@ -2,9 +2,10 @@ from fastapi import Request, HTTPException, status, Depends
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
-from app.core.config import get_auth_data
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import get_auth_data
 
 from app.core.db import get_session
 from app.models import User
@@ -39,7 +40,7 @@ def get_token(request: Request):
     return token
 
 
-def get_current_user(token: str = Depends(get_token), session: Session = Depends(get_session)):
+async def get_current_user(token: str = Depends(get_token), session: AsyncSession = Depends(get_session)):
     try:
         auth_data = get_auth_data()
         payload = jwt.decode(token, auth_data["secret_key"], auth_data['algorithm'])

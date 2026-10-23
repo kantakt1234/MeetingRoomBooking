@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.user import UserRegisterSchema, UserLoginSchema
 from app.core.db import get_session
@@ -11,7 +11,7 @@ user_router = APIRouter(prefix='/auth', tags=["Authorization"])
 
 
 @user_router.post('/register')
-def register_user(user_data: UserRegisterSchema, session: Session = Depends(get_session)):
+async def register_user(user_data: UserRegisterSchema, session: AsyncSession = Depends(get_session)):
     user = session.query(User).where(User.login == user_data.login).all()
     if user:
         raise HTTPException(
@@ -30,7 +30,7 @@ def register_user(user_data: UserRegisterSchema, session: Session = Depends(get_
 
 
 @user_router.post('/login')
-def auth_user(response: Response, user_data: UserLoginSchema, session: Session = Depends(get_session)):
+async def auth_user(response: Response, user_data: UserLoginSchema, session: AsyncSession = Depends(get_session)):
     user = session.query(User).where(User.login == user_data.login).one()
     if not user or verify_password(plain_password=user_data.password, hashed_password=str(user.password_hash)) == False:
         raise HTTPException(
@@ -43,6 +43,6 @@ def auth_user(response: Response, user_data: UserLoginSchema, session: Session =
 
 
 @user_router.post('/logout')
-def logout(response: Response):
+async def logout(response: Response):
     response.delete_cookie("users_access_token")
     return {"result": "success"}
