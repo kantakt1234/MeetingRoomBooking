@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     SUPERUSER_NAME: str
     SUPERUSER_LOGIN: str
     SUPERUSER_PASSWORD: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '.env')

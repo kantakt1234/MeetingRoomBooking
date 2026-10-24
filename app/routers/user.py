@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Response
 
+from app.core.config import settings
 from app.dependencies import get_user_service
 from app.schemas.user import (UserRegisterSchema, UserResponseSchema,
                               UserCredentialsSchema, AccessTokenResponseSchema,
@@ -27,7 +28,8 @@ async def auth_user(
 ) -> AccessTokenResponseSchema:
 
     access_token = await user_service.auth(user_data)
-    response.set_cookie(key="users_access_token", value=access_token, httponly=True)
+    response.set_cookie(key="users_access_token", value=access_token, httponly=True,
+                        samesite="lax", max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60)
     return AccessTokenResponseSchema(access_token=access_token)
 
 
