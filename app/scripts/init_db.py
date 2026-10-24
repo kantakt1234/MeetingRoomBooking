@@ -12,7 +12,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 
 def init_db() -> None:
-    with Session(engine) as session:
+    async with Session(engine) as session:
         user = session.query(User).where(User.login == settings.SUPERUSER_LOGIN).first()
         if not user:
             password = get_password_hash(settings.SUPERUSER_PASSWORD)

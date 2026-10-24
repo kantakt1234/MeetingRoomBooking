@@ -2,7 +2,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import MeetingRoom
-from app.schemas.meeting_room import BaseMeetingRoomSchema
 
 
 class MeetingRoomRepository:
@@ -19,8 +18,8 @@ class MeetingRoomRepository:
         meeting_room = await self.session.execute(query)
         return meeting_room.scalars().one_or_none()
 
-    async def create(self, meeting_room: BaseMeetingRoomSchema) -> MeetingRoom:
-        meeting_room = MeetingRoom(description=meeting_room.description)
+    async def create(self, description: str) -> MeetingRoom:
+        meeting_room = MeetingRoom(description=description)
         self.session.add(meeting_room)
         await self.session.commit()
         await self.session.refresh(meeting_room)
@@ -31,8 +30,8 @@ class MeetingRoomRepository:
         await self.session.commit()
         return True
 
-    async def update(self, meeting_room: MeetingRoom, meeting_room_data: BaseMeetingRoomSchema) -> MeetingRoom:
-        meeting_room.description = meeting_room_data.description
+    async def update(self, meeting_room: MeetingRoom, description: str) -> MeetingRoom:
+        meeting_room.description = description
         await self.session.commit()
         await self.session.refresh(meeting_room)
         return meeting_room

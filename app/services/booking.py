@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from fastapi import HTTPException
-from starlette import status
-
-from app.models import User, Booking, MeetingRoom
+from app.core.exceptions import RoomIsNotFoundError, RoomIsBookedError, BookingIsNotFoundError, ForbiddenError
+from app.models import User, Booking
 from app.repositories.booking import BookingRepository
-from app.schemas.booking import BookingCreateSchema
+from app.schemas.booking import BookingCreateSchema, BookingResponseSchema
+from app.schemas.meeting_room import MeetingRoomResponseSchema
 from app.services.meeting_room import MeetingRoomService
 
 
@@ -14,80 +13,72 @@ class BookingService:
         self.booking_repository = booking_repository
         self.meeting_room_service = meeting_room_service
 
-    async def get_all(self) -> list[Booking]:
-        return await self.booking_repository.get_all()
+    async def get_all(self) -> list[BookingResponseSchema]:
+        bookings = await self.booking_repository.get_all()
+        bookings = [BookingResponseSchema.model_validate(booking) for booking in bookings]
+        return bookings
 
-    async def get_by_id(self, booking_id: int) -> Booking | None:
-        return await self.booking_repository.get_by_id(booking_id)
+    async def get_by_id(self, booking_id: int) -> BookingResponseSchema:
+        booking = await self._get_booking_or_raise(booking_id)
+        return BookingResponseSchema.model_validate(booking) if booking else None
 
-    async def create(self, booking_data: BookingCreateSchema, current_user: User) -> Booking:
+    async def create(self, booking_data: BookingCreateSchema, current_user: User) -> BookingResponseSchema:
         meeting_room = await self.meeting_room_service.get_by_id(booking_data.meeting_room_id)
         if not meeting_room:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Not found"
-            )
+            raise RoomIsNotFoundError()
 
-        if not await self.__check_booking_conflict(booking_data, meeting_room, None):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Room is booked for this time"
-            )
-        new_booking = await self.booking_repository.create(booking_data, current_user)
-        return new_booking
+        if not await self._check_booking_conflict(booking_data, meeting_room, None):
+            raise RoomIsBookedError()
+
+        new_booking = await self.booking_repository.create(
+            current_user.id, booking_data.meeting_room_id,
+            booking_data.date, booking_data.meeting_starts_at,
+            booking_data.meeting_duration,
+        )
+
+        return BookingResponseSchema.model_validate(new_booking)
 
     async def delete(self, booking_id: int, current_user: User) -> bool:
-        booking = await self.booking_repository.get_by_id(booking_id)
+        booking = await self._get_booking_or_raise(booking_id)
 
-        if not booking:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Not found"
-            )
         if booking.user_id != current_user.id and not current_user.is_admin:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Forbidden"
-            )
+            raise ForbiddenError()
+
         await self.booking_repository.delete(booking)
         return True
 
-    async def update(self, booking_id: int, booking_data: BookingCreateSchema, current_user: User) -> Booking:
-
-        booking = await self.booking_repository.get_by_id(booking_id)
-        if not booking:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Not found"
-            )
+    async def update(self, booking_id: int, booking_data: BookingCreateSchema, current_user: User) -> BookingResponseSchema:
+        booking = await self._get_booking_or_raise(booking_id)
 
         meeting_room = await self.meeting_room_service.get_by_id(booking_data.meeting_room_id)
         if not meeting_room:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Not found"
-            )
+            raise RoomIsNotFoundError()
+
         if current_user.id != booking.user_id and not current_user.is_admin:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Forbidden"
-            )
+            raise ForbiddenError()
 
-        if not await self.__check_booking_conflict(booking_data, meeting_room, booking_id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Room is booked for this time"
-            )
-        updated_booking = await self.booking_repository.update(booking, booking_data)
-        return updated_booking
+        if not await self._check_booking_conflict(booking_data, meeting_room, booking_id):
+            raise RoomIsBookedError()
 
-    async def __check_booking_conflict(
+        updated_booking = await self.booking_repository.update(booking, meeting_room.id, booking_data.date, booking_data.meeting_starts_at, booking_data.meeting_duration)
+        return BookingResponseSchema.model_validate(updated_booking)
+
+    async def _get_booking_or_raise(self, booking_id: int) -> Booking:
+        booking = await self.booking_repository.get_by_id(booking_id)
+        if not booking:
+            raise BookingIsNotFoundError()
+        return booking
+
+    async def _check_booking_conflict(
             self,
             booking_data: BookingCreateSchema,
-            meeting_room: MeetingRoom,
+            meeting_room: MeetingRoomResponseSchema,
             exclude_booking_id: int | None = None
     ) -> bool:
-        start_dt = datetime.combine(booking_data.date, booking_data.meeting_starts_at)
+        start_dt = datetime.combine(
+            booking_data.date,
+            booking_data.meeting_starts_at
+        ).replace(tzinfo=timezone.utc)
         end_dt = start_dt + timedelta(
             hours=booking_data.meeting_duration.hour,
             minutes=booking_data.meeting_duration.minute,
@@ -100,7 +91,11 @@ class BookingService:
         )
 
         for booking in bookings_at_date_in_room:
-            booking_start = datetime.combine(booking.date, booking.meeting_starts_at)
+            booking_start = datetime.combine(
+                booking.date,
+                booking.meeting_starts_at
+            ).replace(tzinfo=timezone.utc)
+
             booking_duration = timedelta(
                 hours=booking.meeting_duration.hour,
                 minutes=booking.meeting_duration.minute,

@@ -1,10 +1,9 @@
-from datetime import date
+from datetime import date, time
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Booking, User
-from app.schemas.booking import BookingCreateSchema
+from app.models import Booking
 
 
 class BookingRepository:
@@ -21,13 +20,15 @@ class BookingRepository:
         result = await self.session.execute(query)
         return result.scalars().one_or_none()
 
-    async def create(self, booking_data: BookingCreateSchema, current_user: User) -> Booking:
+    async def create(self, user_id: int, meeting_room_id: int,
+                     booking_date: date, booking_starts_at: time,
+                     booking_duration: time) -> Booking:
         booking = Booking(
-            user_id=current_user.id,
-            meeting_room_id=booking_data.meeting_room_id,
-            date=booking_data.date,
-            meeting_starts_at=booking_data.meeting_starts_at,
-            meeting_duration=booking_data.meeting_duration
+            user_id=user_id,
+            meeting_room_id=meeting_room_id,
+            date=booking_date,
+            meeting_starts_at=booking_starts_at,
+            meeting_duration=booking_duration,
         )
 
         self.session.add(booking)
@@ -40,11 +41,13 @@ class BookingRepository:
         await self.session.commit()
         return True
 
-    async def update(self, booking: Booking, booking_data: BookingCreateSchema) -> Booking:
-        booking.meeting_room_id = booking_data.meeting_room_id
-        booking.meeting_duration = booking_data.meeting_duration
-        booking.date = booking_data.date
-        booking.meeting_starts_at = booking_data.meeting_starts_at
+    async def update(self, booking: Booking, meeting_room_id: int,
+                     booking_date: date, booking_starts_at: time,
+                     booking_duration: time) -> Booking:
+        booking.meeting_room_id = meeting_room_id
+        booking.meeting_duration = booking_duration
+        booking.date = booking_date
+        booking.meeting_starts_at = booking_starts_at
         await self.session.commit()
         await self.session.refresh(booking)
         return booking

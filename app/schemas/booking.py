@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class BookingCreateSchema(BaseModel):
@@ -13,3 +13,11 @@ class BookingCreateSchema(BaseModel):
 class BookingSchema(BookingCreateSchema):
     id: int
     user_id: int
+
+
+class BookingResponseSchema(BookingSchema):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BookingDeleteResponseSchema(BaseModel):
+    result: bool
