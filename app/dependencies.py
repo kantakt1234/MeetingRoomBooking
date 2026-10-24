@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from fastapi import Depends, Request
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_auth_data
@@ -50,18 +50,22 @@ async def get_current_user(
 
     try:
         auth_data = get_auth_data()
-        payload = jwt.decode(token, auth_data["secret_key"], auth_data['algorithm'])
+
+        payload = jwt.decode(
+            token,
+            auth_data["secret_key"],
+            algorithms=[auth_data['algorithm']],
+            options={"require_exp": True}
+        )
+
+    except ExpiredSignatureError:
+        raise TokenIsExpiredError()
     except JWTError:
         raise InvalidTokenError()
 
-    expire = payload.get('exp')
-    expire_time = datetime.fromtimestamp(int(expire), tz=timezone.utc)
-
-    if not expire or expire_time < datetime.now(timezone.utc):
-        raise TokenIsExpiredError()
-
-    user_id = payload.get('sub')
-    if not user_id:
+    try:
+        user_id = int(payload.get('sub'))
+    except (TypeError, ValueError):
         raise InvalidTokenPayloadError()
 
     user_repository = UserRepository(session)
