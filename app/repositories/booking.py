@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, time, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,14 +21,12 @@ class BookingRepository:
         return result.scalars().one_or_none()
 
     async def create(self, user_id: int, meeting_room_id: int,
-                     booking_date: date, booking_starts_at: time,
-                     booking_duration: time) -> Booking:
+                     start_at: datetime, end_at: datetime) -> Booking:
         booking = Booking(
             user_id=user_id,
             meeting_room_id=meeting_room_id,
-            date=booking_date,
-            meeting_starts_at=booking_starts_at,
-            meeting_duration=booking_duration,
+            start_at=start_at,
+            end_at=end_at,
         )
 
         self.session.add(booking)
@@ -42,27 +40,15 @@ class BookingRepository:
         return True
 
     async def update(self, booking: Booking, meeting_room_id: int,
-                     booking_date: date, booking_starts_at: time,
-                     booking_duration: time) -> Booking:
+                     start_at: datetime, end_at: datetime) -> Booking:
         booking.meeting_room_id = meeting_room_id
-        booking.meeting_duration = booking_duration
-        booking.date = booking_date
-        booking.meeting_starts_at = booking_starts_at
+        booking.start_at = start_at
+        booking.end_at = end_at
         await self.session.commit()
         await self.session.refresh(booking)
         return booking
 
-    async def get_by_meeting_room_id_and_booking_date(
-            self,
-            meeting_room_id: int,
-            booking_date: date,
-            exclude_booking_id: int | None = None
-    ) -> list[Booking]:
-        query = select(Booking).where(
-            Booking.meeting_room_id == meeting_room_id,
-            Booking.date == booking_date,
-        )
-        if exclude_booking_id:
-            query = query.where(Booking.id != exclude_booking_id)
+    async def get_overlapping(self, start_at: datetime, end_at: datetime) -> list[Booking]:
+        query = select(Booking).where(Booking.start_at < end_at, Booking.end_at > start_at)
         result = await self.session.execute(query)
         return list(result.scalars().all())

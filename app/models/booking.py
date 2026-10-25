@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import ForeignKey, Date, Time
+from sqlalchemy import ForeignKey, Date, Time, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -11,7 +11,6 @@ class Booking(Base):
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     meeting_room_id: Mapped[int] = mapped_column(ForeignKey("meeting_rooms.id"))
-    date: Mapped[datetime.date] = mapped_column(Date)
-    meeting_starts_at: Mapped[datetime.time] = mapped_column(Time)
-    meeting_duration: Mapped[datetime.time] = mapped_column(Time)
 
+    start_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    end_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))

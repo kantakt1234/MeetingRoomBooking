@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 
 from app.dependencies import get_booking_service, get_current_user
 from app.models import User
-from app.schemas.booking import BookingCreateSchema, BookingResponseSchema, BookingDeleteResponseSchema
+from app.schemas.booking import BookingCreateSchema, BookingResponseSchema, BookingDeleteResponseSchema, \
+    BookingUpdateSchema
 from app.services.booking import BookingService
 
 booking_router = APIRouter(prefix='/booking', tags=['Booking'])
@@ -51,7 +52,7 @@ async def delete_booking(
 @booking_router.put('/{booking_id}')
 async def update_booking(
         booking_id: int,
-        booking_data: BookingCreateSchema,
+        booking_data: BookingUpdateSchema,
         booking_service: BookingService = Depends(get_booking_service),
         current_user: User = Depends(get_current_user)
 ) -> BookingResponseSchema:
