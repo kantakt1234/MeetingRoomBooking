@@ -1,13 +1,12 @@
-from datetime import datetime, timezone
-
 from fastapi import Depends, Request
 from jose import jwt, JWTError, ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_auth_data
 from app.core.db import get_session
-from app.core.exceptions import InvalidTokenError, TokenIsExpiredError, InvalidTokenPayloadError, UserIsNotFoundError, \
-    NotEnoughRightsError, TokenNotFoundError
+from app.core.exceptions import (InvalidTokenError, TokenIsExpiredError,
+                                 InvalidTokenPayloadError, UserIsNotFoundError,
+                                 NotEnoughRightsError, TokenNotFoundError)
 from app.repositories.booking import BookingRepository
 from app.repositories.meeting_room import MeetingRoomRepository
 from app.repositories.user import UserRepository
