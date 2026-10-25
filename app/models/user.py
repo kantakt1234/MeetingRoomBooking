@@ -11,7 +11,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    login: Mapped[str] = mapped_column(String(64), nullable=False)
+    login: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
 
     bookings: Mapped[list['Booking']] = relationship()
